@@ -53,7 +53,6 @@ if __name__ == "__main__":
 
     with open(args.index, 'rb') as fh:
         searcher = pickle.load(fh)
-
     searcher.set_stemming(args.stem)
     searcher.set_ranking(args.rank)
     searcher.set_showall(args.all)
