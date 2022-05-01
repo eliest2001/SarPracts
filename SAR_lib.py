@@ -462,41 +462,42 @@ class SAR_Project:
         return: posting list con los newid incluidos de p1 o p2
 
         """
-        
 
-        
+
+
         res=[]
         i=0
         j=0
 
-        # Mientras no nos pasemos de la longitud de las posting lists
-        while i < len(p1) and j < len(p2):
-
-            # Si es el mismo id de documento en las dos listas lo añadimos y pasamos al siguiente en las dos listas
-            if p1[i] == p2[j]:
+        #mientras no acaben las posting list:
+        while(i < len(p1) and j < len(p2)):
+            #sii el elemento de p1 == p2:
+            if(p1[i]==p2[j]):
+                #se añade y avanzamos ambas posting list
                 res.append(p1[i])
-                i += 1
-                j += 1
-
-            # Si el id de la primera lista es menor, lo añadimos y entonces avanzamos en esta
-            elif p1[i] < p2[j]:
+                i+=1
+                j+=1
+            #sii el elemento de p1 < p2:
+            elif(p1[i]<p2[j]):
+                #se añade y avanzamos ambas posting list
                 res.append(p1[i])
-                i += 1
-
-            # Si el id de la segunda lista es menor, lo añadimos y entonces avanzamos en esta
+                i+=1
+            #sii el elemento de p2 <= p1:
             else:
+                #se añade y avanzamos SOLO p2
                 res.append(p2[j])
-                j += 1
+                j+=1
 
-        # Si aún quedan documentos en alguna de las dos listas, los añadimos
-        while i < len(p1):
-            res.append(p1[i])
-            i += 1
+            #mientras no acaben las posting list se añaden a la variable res
+            while(i<len(p1)):
+                #se añade y avanzamos hasta finalizar
+                res.append(p1[i])
+                i+=1
+            while(j<len(p2)):
+                #se añade y avanzamos hasta finalizar
+                res.append(p2[j])
+                j+=1
 
-        while j < len(p2):
-            res.append(p2[j])
-            j += 1
-        
         return res
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
