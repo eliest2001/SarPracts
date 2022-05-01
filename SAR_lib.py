@@ -270,7 +270,8 @@ class SAR_Project:
                     for w in aux:
                         pterm = aux[i:] + aux[0:i]
                         i=i+1
-                        
+                        self.ptindex[campo][pterm] = self.or_posting(self.ptindex[campo].get(pterm, []),self.index[campo][word])
+                        self.pterms[pterm] = self.pterms.get(pterm, []) + [word]
 
 
 
@@ -476,7 +477,39 @@ class SAR_Project:
         """
 
         
-        pass
+        res=[]
+        i=0
+        j=0
+
+        # Mientras no nos pasemos de la longitud de las posting lists
+        while i < len(p1) and j < len(p2):
+
+            # Si es el mismo id de documento en las dos listas lo añadimos y pasamos al siguiente en las dos listas
+            if p1[i] == p2[j]:
+                res.append(p1[i])
+                i += 1
+                j += 1
+
+            # Si el id de la primera lista es menor, lo añadimos y entonces avanzamos en esta
+            elif p1[i] < p2[j]:
+                res.append(p1[i])
+                i += 1
+
+            # Si el id de la segunda lista es menor, lo añadimos y entonces avanzamos en esta
+            else:
+                res.append(p2[j])
+                j += 1
+
+        # Si aún quedan documentos en alguna de las dos listas, los añadimos
+        while i < len(p1):
+            res.append(p1[i])
+            i += 1
+
+        while j < len(p2):
+            res.append(p2[j])
+            j += 1
+        
+        return res
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
