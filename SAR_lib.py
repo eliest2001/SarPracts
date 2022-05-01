@@ -50,6 +50,7 @@ class SAR_Project:
         self.show_snippet = False # valor por defecto, se cambia con self.set_snippet()
         self.use_stemming = False # valor por defecto, se cambia con self.set_stemming()
         self.use_ranking = False  # valor por defecto, se cambia con self.set_ranking()
+        self.pterms = {} # hash para el indice invertido permuterm --> clave: permuterm, valor: lista con los terminos que tienen ese permuterm
 
 
     ###############################
@@ -234,11 +235,20 @@ class SAR_Project:
         self.stemmer.stem(token) devuelve el stem del token
 
         """
-        
-        pass
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
+         # Recorremos todos los campos del índice de términos
+        for campo in self.index:
+
+            # Recorremos todos los términos del campo
+            for word in self.index[field]:
+                    
+                # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
+                stem = self.stemmer.stem(word)
+                
+                # Añadimos el stem si no lo hemos añadido todavía
+                self.sindex[campo][stem] = self.or_posting(self.sindex[campo].get(stem, []),self.index[campo][word])
 
 
     
@@ -249,11 +259,23 @@ class SAR_Project:
         Crea el indice permuterm (self.ptindex) para los terminos de todos los indices.
 
         """
-        pass
+        
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
+     # Recorremos todos los campos del índice de términos
+        for campo in self.index:
 
+            # Recorremos todos los términos del campo
+            for word in self.index[campo]:
+                    aux = word + "$"
+                    i=0
+
+                    # Generamos los términos permuterm y actualizamos sus posting lists
+                    for w in aux:
+                        pterm = aux[i:] + aux[0:i]
+                        i=i+1
+                        
 
 
 
@@ -264,11 +286,11 @@ class SAR_Project:
         Muestra estadisticas de los indices
         
         """
-        pass
+        
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
+    
         
 
 
