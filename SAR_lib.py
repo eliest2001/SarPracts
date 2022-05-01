@@ -350,7 +350,7 @@ class SAR_Project:
         return: posting list
 
         """
-        pass
+        return self.index[term]
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
