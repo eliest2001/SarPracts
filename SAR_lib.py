@@ -172,27 +172,7 @@ class SAR_Project:
                 Una vez parseado con json.load tendremos una lista de diccionarios, cada diccionario se corresponde a una noticia
 
         """
-
-        with open(filename) as fh:
-            i = 0
-            fname = filename.split("\\")[2][:-5]
-            print(fname)
-            jlist = json.load(fh)
-            for new in jlist:
-                n = len(self.docs)
-                self.docs[n] = f"{fname}_{i}"
-                words = self.tokenize(new["article"])
-                for w in words:
-                    if w in self.index.keys():
-                        if n not in self.index[w]:
-                            self.index[w].append(n)
-                    else:
-                        self.index[w] = [n]
-                i = 1+i
-                        
-                
-            
-            
+                    
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,     
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # cada noticia es un diccionario con los campos:
@@ -202,10 +182,25 @@ class SAR_Project:
         #
         #
         #
+        with open(filename) as fh:
+            i = 0 #Contador para los articulos dentro del fichero
+            fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base 
+            jlist = json.load(fh)
+            for new in jlist:
+                n = len(self.docs) #DocId
+                self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
+                words = self.tokenize(new["article"])
+                for w in words:
+                    if w in self.index.keys():
+                        if n not in self.index[w]:
+                            self.index[w].append(n)
+                    else:
+                        self.index[w] = [n]
+                i = i + 1
+                        
+                
+            
 
-        #################
-        ### COMPLETAR ###
-        #################
         
 
 
@@ -325,11 +320,11 @@ class SAR_Project:
 
         if query is None or len(query) == 0:
             return []
-
+        
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
+        
  
 
 
@@ -449,11 +444,21 @@ class SAR_Project:
         return: posting list con los newid incluidos en p1 y p2
 
         """
-        
-        pass
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
+        respuesta = []
+        i = 0
+        j = 0
+        while len(p1)> i and len(p1)>i:
+            if p1[i] == p2[j]:
+                respuesta.append(p1[i])
+                i = i + 1
+                j = j + 1
+            elif p1[i] < p2[j]:
+                i = i + 1
+            else:
+                j = j + 1
 
 
 
