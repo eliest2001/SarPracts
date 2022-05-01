@@ -7,7 +7,7 @@ import re
 class SAR_Project:
     """
     Prototipo de la clase para realizar la indexacion y la recuperacion de noticias
-        
+
         Preparada para todas las ampliaciones:
           parentesis + multiples indices + posicionales + stemming + permuterm + ranking de resultado
 
@@ -21,8 +21,8 @@ class SAR_Project:
     fields = [("title", True), ("date", False),
               ("keywords", True), ("article", True),
               ("summary", True)]
-    
-    
+
+
     # numero maximo de documento a mostrar cuando self.show_all es False
     SHOW_MAX = 10
 
@@ -33,7 +33,7 @@ class SAR_Project:
         NECESARIO PARA LA VERSION MINIMA
 
         Incluye todas las variables necesaria para todas las ampliaciones.
-        Puedes añadir más variables si las necesitas 
+        Puedes añadir más variables si las necesitas
 
         """
         self.index = {} # hash para el indice invertido de terminos --> clave: termino, valor: posting list.
@@ -64,7 +64,7 @@ class SAR_Project:
         """
 
         Cambia el modo de mostrar los resultados.
-        
+
         input: "v" booleano.
 
         UTIL PARA TODAS LAS VERSIONES
@@ -79,7 +79,7 @@ class SAR_Project:
         """
 
         Cambia el modo de mostrar snippet.
-        
+
         input: "v" booleano.
 
         UTIL PARA TODAS LAS VERSIONES
@@ -94,7 +94,7 @@ class SAR_Project:
         """
 
         Cambia el modo de stemming por defecto.
-        
+
         input: "v" booleano.
 
         UTIL PARA LA VERSION CON STEMMING
@@ -109,7 +109,7 @@ class SAR_Project:
         """
 
         Cambia el modo de ranking por defecto.
-        
+
         input: "v" booleano.
 
         UTIL PARA LA VERSION CON RANKING DE NOTICIAS
@@ -132,7 +132,7 @@ class SAR_Project:
     def index_dir(self, root, **args):
         """
         NECESARIO PARA TODAS LAS VERSIONES
-        
+
         Recorre recursivamente el directorio "root" e indexa su contenido
         los argumentos adicionales "**args" solo son necesarios para las funcionalidades ampliadas
 
@@ -154,8 +154,8 @@ class SAR_Project:
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
-        
-        
+
+
 
     def index_file(self, filename):
         """
@@ -172,8 +172,8 @@ class SAR_Project:
                 Una vez parseado con json.load tendremos una lista de diccionarios, cada diccionario se corresponde a una noticia
 
         """
-                    
-        # "jlist" es una lista con tantos elementos como noticias hay en el fichero,     
+
+        # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # cada noticia es un diccionario con los campos:
         #      "title", "date", "keywords", "article", "summary"
@@ -184,7 +184,7 @@ class SAR_Project:
         #
         with open(filename) as fh:
             i = 0 #Contador para los articulos dentro del fichero
-            fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base 
+            fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
             jlist = json.load(fh)
             for new in jlist:
                 n = len(self.docs) #DocId
@@ -197,11 +197,6 @@ class SAR_Project:
                     else:
                         self.index[w] = [n]
                 i = i + 1
-                        
-                
-            
-
-        
 
 
 
@@ -238,15 +233,15 @@ class SAR_Project:
 
             # Recorremos todos los términos del campo
             for word in self.index[field]:
-                    
+
                 # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
                 stem = self.stemmer.stem(word)
-                
+
                 # Añadimos el stem si no lo hemos añadido todavía
                 self.sindex[campo][stem] = self.or_posting(self.sindex[campo].get(stem, []),self.index[campo][word])
 
 
-    
+
     def make_permuterm(self):
         """
         NECESARIO PARA LA AMPLIACION DE PERMUTERM
@@ -254,7 +249,7 @@ class SAR_Project:
         Crea el indice permuterm (self.ptindex) para los terminos de todos los indices.
 
         """
-        
+
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -278,22 +273,14 @@ class SAR_Project:
     def show_stats(self):
         """
         NECESARIO PARA TODAS LAS VERSIONES
-        
+
         Muestra estadisticas de los indices
-        
+
         """
-        
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-    
-        
-
-
-
-
-
-
 
 
     ###################################
@@ -321,19 +308,19 @@ class SAR_Project:
 
         if query is None or len(query) == 0:
             return []
-        
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-        
- 
+
+
 
 
     def get_posting(self, term, field='article'):
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
-        Devuelve la posting list asociada a un termino. 
+        Devuelve la posting list asociada a un termino.
         Dependiendo de las ampliaciones implementadas "get_posting" puede llamar a:
             - self.get_positionals: para la ampliacion de posicionales
             - self.get_permuterm: para la ampliacion de permuterms
@@ -383,7 +370,7 @@ class SAR_Project:
         return: posting list
 
         """
-        
+
         stem = self.stemmer.stem(term)
 
         ####################################################
@@ -425,7 +412,7 @@ class SAR_Project:
         return: posting list con todos los newid exceptos los contenidos en p
 
         """
-        
+
         pass
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -475,6 +462,7 @@ class SAR_Project:
         return: posting list con los newid incluidos de p1 o p2
 
         """
+        
 
         
         res=[]
@@ -529,7 +517,7 @@ class SAR_Project:
 
         """
 
-        
+
         pass
         ########################################################
         ## COMPLETAR PARA TODAS LAS VERSIONES SI ES NECESARIO ##
@@ -550,7 +538,7 @@ class SAR_Project:
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
-        Resuelve una consulta y la muestra junto al numero de resultados 
+        Resuelve una consulta y la muestra junto al numero de resultados
 
         param:  "query": query que se debe resolver.
 
@@ -575,11 +563,11 @@ class SAR_Project:
         param:  "query": query que se debe resolver.
 
         return: el numero de noticias recuperadas, para la opcion -T
-        
+
         """
         result = self.solve_query(query)
         if self.use_ranking:
-            result = self.rank_result(result, query)   
+            result = self.rank_result(result, query)
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -603,7 +591,7 @@ class SAR_Project:
         """
 
         pass
-        
+
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
         ###################################################
