@@ -147,10 +147,13 @@ class SAR_Project:
                 if filename.endswith('.json'):
                     fullname = os.path.join(dir, filename)
                     self.index_file(fullname)
+        print(self.index)
+        print(self.docs)
 
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
+        
         
 
     def index_file(self, filename):
@@ -170,9 +173,23 @@ class SAR_Project:
         """
 
         with open(filename) as fh:
+            fname = filename.split("\\")[2][:-5]
             jlist = json.load(fh)
-
-        #
+            for new in jlist:
+                n = len(self.docs)
+                self.docs[n] = fname
+                words = self.tokenize(new["article"])
+                for w in words:
+                    if w in self.index.keys():
+                        if n not in self.index[w]:
+                            self.index[w].append(n)
+                    else:
+                        self.index[w] = [n]
+                        
+                
+            
+            
+            
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # cada noticia es un diccionario con los campos:
         #      "title", "date", "keywords", "article", "summary"
@@ -181,9 +198,11 @@ class SAR_Project:
         #
         #
         #
+
         #################
         ### COMPLETAR ###
         #################
+        
 
 
 
