@@ -173,11 +173,13 @@ class SAR_Project:
         """
 
         with open(filename) as fh:
+            i = 0
             fname = filename.split("\\")[2][:-5]
+            print(fname)
             jlist = json.load(fh)
             for new in jlist:
                 n = len(self.docs)
-                self.docs[n] = fname
+                self.docs[n] = f"{fname}_{i}"
                 words = self.tokenize(new["article"])
                 for w in words:
                     if w in self.index.keys():
@@ -185,6 +187,7 @@ class SAR_Project:
                             self.index[w].append(n)
                     else:
                         self.index[w] = [n]
+                i = i + 1
                         
                 
             
