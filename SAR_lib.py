@@ -164,7 +164,7 @@ class SAR_Project:
 
         Para tokenizar la noticia se debe llamar a "self.tokenize"
 
-        Dependiendo del valor de "self.multifield" y "self.positional" se debe ampliar el indexado.
+        Dependiendo del valor de "self.multi field" y "self.positional" se debe ampliar el indexado.
         En estos casos, se recomienda crear nuevos metodos para hacer mas sencilla la implementacion
 
         input: "filename" es el nombre de un fichero en formato JSON Arrays (https://www.w3schools.com/js/js_json_arrays.asp).
@@ -187,12 +187,12 @@ class SAR_Project:
                             self.index[w].append(n)
                     else:
                         self.index[w] = [n]
-                i = i + 1
+                i = 1+i
                         
                 
             
             
-            
+        # "jlist" es una lista con tantos elementos como noticias hay en el fichero,     
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # cada noticia es un diccionario con los campos:
         #      "title", "date", "keywords", "article", "summary"
