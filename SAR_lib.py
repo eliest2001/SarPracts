@@ -306,15 +306,99 @@ class SAR_Project:
 
         """
 
-        if query is None or len(query) == 0:
-            return []
+        #ormalizamos la query
+        query = query.lower()
+
+        #separamos los parentesis
+        split = ""
+        for i in range(0,len(query)):
+            item=query[i]
+            if item == '(' or item == ')':
+                split = split + " " + item + " "
+            else:
+                split = split + item
+
+        #separamos los diferentes items de la query
+        query = split.split()
+
+        #insertamos para que el primer término haga un OR con una lista vacía (así no hay problemas)
+        query.insert(0,'or')
+
+        #devolvemos el resultado llamando a un nuevo método que resuelva la query de forma recursiva
+        return self.solve_query2(query,{})
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
+    def solve_query2(self,query,prev):
+        """
+        Resuelve una query de forma recursiva.
 
+        param:  "query": cadena con la query
+                "prev": parámetro recursivo que almacenará la posting list t1 en (t1 AND/OR t2)
 
+        return: la posting list con el resultado de la query
+
+        """
+
+        new_query = ""      #query a procesar
+        i=1                 #indica a partir de donde comienza new_query
+        field = 'articulo'  #campo sobre el que se efectua la query
+
+        if query is None or len(query) == 0:
+            return prev
+        else:
+            #posting list para hacer "t1 AND/OR t2"
+            t1 = prev
+
+            #Analizamos el que va después del AND/OR por si hay que negar el siguiente término
+            if query[1] != 'not' and query[1] != '(':
+                term = query[1]
+                field,term = self.colonSplit(term)
+
+                t2 = self.get_posting(term, field)
+                i=2
+
+            elif query[1] != '(': #después del AND/OR hay un 'NOT'
+                term = query[2] #item después del 'NOT'
+
+                if term == '(': #tenemos que negar una consulta entre paréntesis
+                    #resolvemos la consulta entre paréntesis
+                    new_query = self.betweenParenthesis(query[2:len(query)])
+                    new_query.insert(0,'or')
+                    t2_sin_negar = self.solve_query2(new_query,{})
+
+                    #negamos la consulta
+                    t2 = self.reverse_posting(t2_sin_negar)
+
+                    #longitud de la subquery + 2 paréntesis + 'NOT' + 1 (contado en la subquery por 'OR')
+                    i = len(new_query)+3
+                else: #negamos solo un término
+                    field,term = self.colonSplit(term)
+
+                    t2 = self.reverse_posting(self.get_posting(term, field))
+                    i=3
+            else: #es un '('
+                #obtenemos la consulta entre paréntesis
+                new_query = self.betweenParenthesis(query[1:len(query)])
+                new_query.insert(0,'or')
+                t2 = self.solve_query2(new_query,{})
+
+                #longitud de la subquery + paréntesis + 1 (contado por 'OR' en len(new_query))
+                i = len(new_query)+2
+
+            #Actualizamos la lista según operador
+            if query[0] == 'and':
+                prev = self.and_posting(t1,t2)
+            elif query[0] == 'or':
+                prev = self.or_posting(t1,t2)
+
+        #Actualizamos la posición desde donde empezará la siguiente parte
+        new_query = query[i:len(query)]
+
+        #devolvemos recursivamente
+        return self.solve_query2(new_query,prev)
 
     def get_posting(self, term, field='article'):
         """
@@ -333,6 +417,27 @@ class SAR_Project:
         return: posting list
 
         """
+
+        termAux = term
+
+        #Se añade el término y campo de la consulta para el ranking
+        self.term_field[(termAux, field)] = True
+
+        res = []
+
+        #Comprobamos si se debe realizar permuterms
+        if ("*" in termAux or "?" in termAux):
+            res = self.get_permuterm(termAux,field)
+
+        #Comprobamos si se debe realizar stemming
+        elif (self.use_stemming):
+            res = self.get_stemming(term, field)
+
+        #Caso estándar
+        elif (termAux in self.index[field]):
+            res = self.index[field][termAux]
+        return res
+
         return self.index[term]
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -377,7 +482,7 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
         # Generamos el stem del término
-        
+
         res = []
 
         # Búscamos si el stem está indexado
@@ -406,7 +511,7 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ##################################################
         res = []
-        
+
         #Comprobamos que se incluye la palabra comodín y cuál es
         if("*" in term or "?" in term):
             pterm = term + "$"
@@ -418,7 +523,7 @@ class SAR_Project:
             #Realizamos permutaciones hasta que el carácter comodín se encuentra en la última posición
             while pterm[len(pterm)-1]!=s:
                 pterm = pterm[1:] + pterm[0]
-            
+
             #Llegados a este punto ya tenemos la palabra que debemos buscar en ptindex
             #Si s=="*"
             if(s == "*"):
@@ -433,8 +538,6 @@ class SAR_Project:
                         res = self.or_posting(res,self.ptindex[field][element])
 
         return res
-
-
 
 
     def reverse_posting(self, p):
