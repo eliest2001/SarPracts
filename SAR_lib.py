@@ -138,6 +138,37 @@ class SAR_Project:
 
         """
 
+        if self.multifield:
+            self.index = {
+                'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
+            }
+            self.weight = {
+                'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
+            }
+            if self.stemming:
+                self.sindex = {
+                    'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
+                }
+            if self.permuterm:
+                self.ptindex = {
+                    'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
+                }
+        else:
+            self.index = {
+                'article': {}
+            }
+            self.weight = {
+                'article': {}
+            }
+            if self.stemming:
+                self.sindex = {
+                    'article': {}
+                }
+            if self.permuterm:
+                self.ptindex = {
+                    'article': {}
+                }
+
         self.multifield = args['multifield']
         self.positional = args['positional']
         self.stemming = args['stem']
@@ -278,6 +309,28 @@ class SAR_Project:
 
         """
 
+        print('========================================')
+        print('Número de días indexados: {}'.format(len(self.docs)))
+        print('----------------------------------------')
+        print('Número de noticias indexadas: {}'.format(len(self.news)))
+        print('----------------------------------------')
+        print('TOKENS:')
+        for field in self.index.keys():
+            print("\t# tokens en '{}': {}".format(field, len(self.index[field])))
+        print('----------------------------------------')
+        if (self.permuterm):
+            print('PERMUTERMS:')
+            for field in self.ptindex.keys():
+                 print("\t# tokens en '{}': {}".format(field, len(self.ptindex[field])))
+            print('----------------------------------------')
+        if (self.stemming):
+            print('STEMS:')
+            for field in self.sindex.keys():
+                 print("\t# tokens en '{}': {}".format(field, len(self.sindex[field])))
+            print('----------------------------------------')
+        print('las consultas posicionales NO están permitidas')
+        print('========================================')
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -306,7 +359,7 @@ class SAR_Project:
 
         """
 
-        #ormalizamos la query
+        #normalizamos la query
         query = query.lower()
 
         #separamos los parentesis
@@ -365,7 +418,7 @@ class SAR_Project:
 
                 if term == '(': #tenemos que negar una consulta entre paréntesis
                     #resolvemos la consulta entre paréntesis
-                    new_query = self.betweenParenthesis(query[2:len(query)])
+                    new_query = self.subconsulta(query[2:len(query)])
                     new_query.insert(0,'or')
                     t2_sin_negar = self.solve_query2(new_query,{})
 
@@ -381,7 +434,7 @@ class SAR_Project:
                     i=3
             else: #es un '('
                 #obtenemos la consulta entre paréntesis
-                new_query = self.betweenParenthesis(query[1:len(query)])
+                new_query = self.subconsulta(query[1:len(query)])
                 new_query.insert(0,'or')
                 t2 = self.solve_query2(new_query,{})
 
@@ -399,6 +452,44 @@ class SAR_Project:
 
         #devolvemos recursivamente
         return self.solve_query2(new_query,prev)
+
+    def colonSplit(self,term):
+        """
+        Calcula el nuevo campo y recalcula el nuevo término
+
+        param:  "term": término a consultar
+
+        return: una tupla (field,term) con el campo y término correspondientes
+
+        """
+
+        field = 'article'
+        colonSplit = term.split(':')
+        if len(colonSplit) == 2:
+            field = colonSplit[0]
+            term = colonSplit[1]
+
+        return field,term
+
+    def subconsulta(self,query):
+        """
+        Obtiene la subconsulta entre paréntesis
+
+        param:  "query": la consulta sobre la que realizar la subconsulta
+
+        return: la subconsulta entre los paréntesis exteriores
+
+        """
+
+        j = 0 #contador de subconsultas
+
+        #calcular donde acaba la subconsulta
+        for i in range (0,len(query)):
+            if query[i] == '(': j = j+1 #se abre subconsulta
+            if query[i] == ')': j = j-1 #se cierra subconsulta
+            if(j==0): break #se ha cerrado el primer paréntesis
+
+        return query[1:i]
 
     def get_posting(self, term, field='article'):
         """
@@ -554,6 +645,12 @@ class SAR_Project:
         return: posting list con todos los newid exceptos los contenidos en p
 
         """
+
+        #Obtenemos una posting list con todas las noticias diferentes
+        res = list(self.news.keys())
+
+        #Procedemos a quitar aquellas que están incluidas en p
+        return self.minus_posting(res, p)
 
         pass
         ########################################
