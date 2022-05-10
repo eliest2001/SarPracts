@@ -36,6 +36,7 @@ class SAR_Project:
         Puedes añadir más variables si las necesitas
 
         """
+        self.term_field = {}
         self.index = {} # hash para el indice invertido de terminos --> clave: termino, valor: posting list.
                         # Si se hace la implementacion multifield, se pude hacer un segundo nivel de hashing de tal forma que:
                         # self.index['title'] seria el indice invertido del campo 'title'.
@@ -137,7 +138,11 @@ class SAR_Project:
         los argumentos adicionales "**args" solo son necesarios para las funcionalidades ampliadas
 
         """
-
+        self.multifield = args['multifield']
+        self.positional = args['positional']
+        self.stemming = args['stem']
+        self.permuterm = args['permuterm']
+        
         if self.multifield:
             self.index = {
                 'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
@@ -153,35 +158,15 @@ class SAR_Project:
                 self.ptindex = {
                     'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
                 }
-        else:
-            self.index = {
-                'article': {}
-            }
-            self.weight = {
-                'article': {}
-            }
-            if self.stemming:
-                self.sindex = {
-                    'article': {}
-                }
-            if self.permuterm:
-                self.ptindex = {
-                    'article': {}
-                }
-
-        self.multifield = args['multifield']
-        self.positional = args['positional']
-        self.stemming = args['stem']
-        self.permuterm = args['permuterm']
 
         for dir, subdirs, files in os.walk(root):
             for filename in files:
                 if filename.endswith('.json'):
                     fullname = os.path.join(dir, filename)
                     self.index_file(fullname)
-        print(self.index)
-        print(self.docs)
 
+        if self.stemming:
+            self.make_stemming()
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
@@ -204,15 +189,6 @@ class SAR_Project:
 
         """
 
-        # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
-        # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
-        # cada noticia es un diccionario con los campos:
-        #      "title", "date", "keywords", "article", "summary"
-        #
-        # En la version basica solo se debe indexar el contenido "article"
-        #
-        #
-        #
         with open(filename) as fh:
             i = 0 #Contador para los articulos dentro del fichero
             fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
@@ -228,6 +204,7 @@ class SAR_Project:
                     else:
                         self.index[w] = [n]
                 i = i + 1
+        
 
 
 
@@ -260,16 +237,21 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
          # Recorremos todos los campos del índice de términos
-        for field in self.index:
-
+        
+        for word in self.index.keys():
+          
             # Recorremos todos los términos del campo
-            for term in self.index[field]:
-
+            #for term in self.index[field]:
                 # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
-                stem = self.stemmer.stem(term)
-
-                # Añadimos el stem si no lo hemos añadido todavía
-                self.sindex[field][stem] = self.or_posting(self.sindex[field].get(stem, []),self.index[field][term])
+            stem = self.stemmer.stem(word)
+            
+            if stem in self.sindex.keys():
+                if word not in self.index[word]:
+                    self.index[stem].append(word)
+                else:
+                    self.index[stem] = [word]
+            # Añadimos el stem si no lo hemos añadido todavía
+            #self.sindex[stem] = self.or_posting(self.sindex[field].get(stem, []),self.index[field][term])
 
 
 
@@ -378,7 +360,7 @@ class SAR_Project:
         query.insert(0,'or')
 
         #devolvemos el resultado llamando a un nuevo método que resuelva la query de forma recursiva
-        return self.solve_query2(query,{})
+        return self.solve_query2(query,[])
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -525,11 +507,11 @@ class SAR_Project:
             res = self.get_stemming(term, field)
 
         #Caso estándar
-        elif (termAux in self.index[field]):
-            res = self.index[field][termAux]
+        elif (termAux in self.index):
+            res = self.index[termAux]
         return res
 
-        return self.index[term]
+        #return self.index[term]
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -647,12 +629,13 @@ class SAR_Project:
         """
 
         #Obtenemos una posting list con todas las noticias diferentes
-        res = list(self.news.keys())
+        res = list(self.docs.keys())
 
         #Procedemos a quitar aquellas que están incluidas en p
+
         return self.minus_posting(res, p)
 
-        pass
+   
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -674,10 +657,11 @@ class SAR_Project:
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
+
         respuesta = []
         i = 0
         j = 0
-        while len(p1)> i and len(p1)>i:
+        while len(p1)> i and len(p2)>j:
             if p1[i] == p2[j]:
                 respuesta.append(p1[i])
                 i = i + 1
@@ -686,6 +670,7 @@ class SAR_Project:
                 i = i + 1
             else:
                 j = j + 1
+        return respuesta
 
 
 
@@ -728,11 +713,11 @@ class SAR_Project:
                 j+=1
 
             #mientras no acaben las posting list se añaden a la variable res
-            while(i<len(p1)):
+        while(i<len(p1)):
                 #se añade y avanzamos hasta finalizar
                 res.append(p1[i])
                 i+=1
-            while(j<len(p2)):
+        while(j<len(p2)):
                 #se añade y avanzamos hasta finalizar
                 res.append(p2[j])
                 j+=1
@@ -756,7 +741,24 @@ class SAR_Project:
         return: posting list con los newid incluidos de p1 y no en p2
 
         """
+        respuesta = []
+        i = 0
+        j = 0
 
+        while len(p1)> i and len(p2)>j:
+            if p1[i] == p2[j]:
+                i = i + 1
+                j = j + 1
+            elif p1[i] < p2[j]:
+                respuesta.append(p1[i])
+                i = i + 1
+            else:
+                j = j + 1
+        while(i<len(p1)):
+            respuesta.append(p1[i])
+            i+=1    
+
+        return respuesta
 
         pass
         ########################################################
@@ -806,9 +808,10 @@ class SAR_Project:
 
         """
         result = self.solve_query(query)
+        print(result)
         if self.use_ranking:
             result = self.rank_result(result, query)
-
+            
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
