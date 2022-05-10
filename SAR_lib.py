@@ -246,10 +246,10 @@ class SAR_Project:
             stem = self.stemmer.stem(word)
             
             if stem in self.sindex.keys():
-                if word not in self.index[word]:
-                    self.index[stem].append(word)
+                if word not in self.sindex[stem]:
+                    self.sindex[stem].append(word)
             else:
-                self.index[stem] = [word]
+                self.sindex[stem] = [word]
             # Añadimos el stem si no lo hemos añadido todavía
             #self.sindex[stem] = self.or_posting(self.sindex[field].get(stem, []),self.index[field][term])
 
