@@ -3,6 +3,7 @@ from nltk.stem.snowball import SnowballStemmer
 import os
 import re
 import math
+import pickle
 
 class SAR_Project:
     """
@@ -316,28 +317,37 @@ class SAR_Project:
         """
 
         print('========================================')
-        print('Número de días indexados: {}'.format(len(self.docs)))
+        print('Number of indexed days: {}'.format(len(self.docs)))
         print('----------------------------------------')
-        print('Número de noticias indexadas: {}'.format(len(self.news)))
+        print('Number of indexed news: {}'.format(len(self.news)))
         print('----------------------------------------')
         print('TOKENS:')
         for field in self.index.keys():
-            print("\t# tokens en '{}': {}".format(field, len(self.index[field])))
+            print("\t# of tokens in '{}': {}".format(field, len(self.index[field])))
         print('----------------------------------------')
         if (self.permuterm):
             print('PERMUTERMS:')
             for field in self.ptindex.keys():
-                 print("\t# tokens en '{}': {}".format(field, self.ptindex[field]))
+                 print("\t# of permuterms in '{}': {}".format(field, self.ptindex[field]))
             print('----------------------------------------')
         if (self.stemming):
             print('STEMS:')
             for field in self.sindex.keys():
-                 print("\t# tokens en '{}': {}".format(field, self.sindex[field]))
+                 print("\t# of stems in '{}': {}".format(field, self.sindex[field]))
             print('----------------------------------------')
         if (self.positional):
-            print('POSITIONAL:')
+            print('Positional queries are allowed.')
 
         print('========================================')
+
+        t1 = time.time()
+        with open(indexfile, 'wb') as fh:
+            pickle.dump(indexer, fh)
+        t2 = time.time()
+        indexer.show_stats()
+        print("Time indexing: %2.2fs." % (t1 - t0))
+        print("Time saving: %2.2fs." % (t2 - t1))
+        print()
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
