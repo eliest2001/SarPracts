@@ -2,7 +2,7 @@ import json
 from nltk.stem.snowball import SnowballStemmer
 import os
 import re
-
+import math
 
 class SAR_Project:
     """
@@ -169,8 +169,6 @@ class SAR_Project:
         if self.stemming:
             self.set_stemming(True)
             self.make_stemming()
-        if self.permuterm:
-            self.make_permuterm()
             
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
@@ -209,7 +207,7 @@ class SAR_Project:
                             if n not in self.index[w]:
                                 self.index[w].append(n)
                         if w in self.posindex.keys():
-                            if n not in self.index[w].keys():
+                            if n not in self.posindex[w].keys():
                                 self.posindex[w][n] = [j]
                             else:
                                 self.posindex[w][n].append(j)
@@ -300,10 +298,10 @@ class SAR_Project:
                 self.ptindex[term] = [term]
              # Generamos los términos permuterm y actualizamos sus posting lists
                 for w in aux:
-                    pterm = aux[i:] + aux[0:i] 
+                    pterm = aux[i:] + aux[0:i]
                     i=i+1
                     self.ptindex[term].append(pterm)
-            
+            self.ptindex[term].remove(term)
 
 
 
@@ -372,10 +370,15 @@ class SAR_Project:
 
         #separamos los parentesis
         split = ""
+        open = False
         for i in range(0,len(query)):
             item=query[i]
             if item == '(' or item == ')':
                 split = split + " " + item + " "
+            if item == '"':
+                open = True
+            if item == " " and open:
+                split = split + "|"
             else:
                 split = split + item
 
@@ -520,14 +523,17 @@ class SAR_Project:
         termAux = term
 
         #Se añade el término y campo de la consulta para el ranking
-        #self.term_field[(termAux, field)] = True
+        self.term_field[(termAux, field)] = True
 
         res = []
 
         #Comprobamos si se debe realizar permuterms
         if ("*" in termAux or "?" in termAux):
             res = self.get_permuterm(termAux,field)
-
+            
+        if termAux[0] == '"' and termAux[-1] == '"':
+            var = termAux.replace('"',"")
+            res = self.get_positionals(var.split("|"))
         #Comprobamos si se debe realizar stemming
         elif (self.use_stemming):
             res = self.get_stemming(term, field)
@@ -556,6 +562,38 @@ class SAR_Project:
         return: posting list
 
         """
+        pos = -1
+        docs = []
+        res = []
+        for i in terms:
+            if i in self.posindex.keys():    
+                docs.append(list(sorted(self.posindex[i].keys())))                
+            else:
+                return [] 
+        prev = docs.pop(0)
+        while docs != []:
+            d = docs.pop(0)
+            prev = self.and_posting(prev,d)
+        for d in prev:
+            posis = [self.posindex[w][d] for w in terms]
+            
+            for i in posis[0]:
+                start = 1
+                n = i
+                while start <= len(posis):
+                    if start == len(posis): 
+                        if d not in res:
+                            res.append(d)
+                            break
+                    elif n+1 in posis[start]:
+                        start += 1
+                        n+=1
+                    else:
+                        break
+        return res            
+            
+            
+            
         
 
 
@@ -601,29 +639,22 @@ class SAR_Project:
 
         """
 
-        ##################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
-        ##################################################
-        res = []
-        i=0
-        
-        print("GET PERMUTERM!")
         if("?" in term):
-            term = term.replace("?", "*")
-        
+            term = term.replace("?", "")
+
         for simbolo in term:
-            if(simbolo=="*"):
+            if(simbolo==""):
                 break
             i=i+1
-           
-           
-            
+
+
+
         ini=term[0:i]
         fin=term[i+1:len(term)]
         for permuterms in self.ptindex:
             if permuterms.startswith(ini) and permuterms.endswith(fin):
                 res.append(permuterms)
-       
+
         return res
 
 
@@ -846,7 +877,68 @@ class SAR_Project:
 
         """
 
-        pass
+        terms={}
+
+        for tupla in query.keys():
+            #término y campo
+            term=tupla[0]
+            field=tupla[1]
+
+            #si es permuterm
+            if("*" in term or "?" in term):
+                #permuterms relacionados
+                pterms=self.get_pterms(term,field)
+
+                #términos
+                for elem in pterms:
+                   terminos=self.pterms[elem]
+                   for termino in terminos:
+                       terms[(termino,field)]=True
+
+            #con stemming
+            if self.use_stemming:
+                #términos asociados al stem
+                terminos=self.sterms[self.stemmer.stem(term)]
+                for termino in terminos:
+                    terms[(termino,field)]=True
+
+            #en el resto de los casos
+            else:
+                terms[(term,field)]=True
+
+        pesado=0
+
+        #para cada documento
+        for doc in result:
+            peso_doc=0
+
+            #para cada término y campo
+            for tupla in terms:
+                term=tupla[0]
+                field=tupla[1]
+
+                #se calcula el pesado
+                tf=0
+                ft=self.weight[field][term].get(doc,0)
+
+                if ft>0:
+                    tf=1+math.log10(ft)
+
+                #calculamos la funcion global idf
+                df=len(self.weigth[field][term])
+                idf=math.log10(self.N/df)
+
+                #calculamos el peso del documento
+                peso_doc = peso_doc + tf*idf
+
+            #añadimos los pesados
+            self.weight_doc[doc]=self.weight_doc[doc].get(doc,0)+peso_doc
+            pesado.append(peso_doc)
+
+        #ordenamos los pesados
+        res=[x for _, x in sorted(zip(pesado,result), reverse=True)]
+
+        return res
 
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
