@@ -3,7 +3,6 @@ from nltk.stem.snowball import SnowballStemmer
 import os
 import re
 import math
-import pickle
 
 class SAR_Project:
     """
@@ -339,15 +338,6 @@ class SAR_Project:
             print('Positional queries are allowed.')
 
         print('========================================')
-
-        t1 = time.time()
-        with open(indexfile, 'wb') as fh:
-            pickle.dump(indexer, fh)
-        t2 = time.time()
-        indexer.show_stats()
-        print("Time indexing: %2.2fs." % (t1 - t0))
-        print("Time saving: %2.2fs." % (t2 - t1))
-        print()
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
