@@ -142,7 +142,7 @@ class SAR_Project:
         self.positional = args['positional']
         self.stemming = args['stem']
         self.permuterm = args['permuterm']
-        
+
         if self.multifield:
             self.index = {
                 'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
@@ -204,7 +204,7 @@ class SAR_Project:
                     else:
                         self.index[w] = [n]
                 i = i + 1
-        
+
 
 
 
@@ -237,14 +237,14 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
          # Recorremos todos los campos del índice de términos
-        
+
         for word in self.index.keys():
-          
+
             # Recorremos todos los términos del campo
             #for term in self.index[field]:
                 # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
             stem = self.stemmer.stem(word)
-            
+
             if stem in self.sindex.keys():
                 if word not in self.sindex[stem]:
                     self.sindex[stem].append(word)
@@ -379,7 +379,7 @@ class SAR_Project:
 
         new_query = ""      #query a procesar
         i=1                 #indica a partir de donde comienza new_query
-        field = 'articulo'  #campo sobre el que se efectua la query
+        field = 'article'  #campo sobre el que se efectua la query
 
         if query is None or len(query) == 0:
             return prev
@@ -635,7 +635,7 @@ class SAR_Project:
 
         return self.minus_posting(res, p)
 
-   
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -756,7 +756,7 @@ class SAR_Project:
                 j = j + 1
         while(i<len(p1)):
             respuesta.append(p1[i])
-            i+=1    
+            i+=1
 
         return respuesta
 
@@ -811,7 +811,7 @@ class SAR_Project:
         print(result)
         if self.use_ranking:
             result = self.rank_result(result, query)
-            
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
