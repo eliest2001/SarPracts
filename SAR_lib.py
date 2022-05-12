@@ -209,7 +209,7 @@ class SAR_Project:
                             if n not in self.index[w]:
                                 self.index[w].append(n)
                         if w in self.posindex.keys():
-                            if n not in self.index[w].keys():
+                            if n not in self.posindex[w].keys():
                                 self.posindex[w][n] = [j]
                             else:
                                 self.posindex[w][n].append(j)
@@ -372,10 +372,15 @@ class SAR_Project:
 
         #separamos los parentesis
         split = ""
+        open = False
         for i in range(0,len(query)):
             item=query[i]
             if item == '(' or item == ')':
                 split = split + " " + item + " "
+            if item == '"':
+                open = True
+            if item == " " and open:
+                split = split + "|"
             else:
                 split = split + item
 
@@ -527,7 +532,10 @@ class SAR_Project:
         #Comprobamos si se debe realizar permuterms
         if ("*" in termAux or "?" in termAux):
             res = self.get_permuterm(termAux,field)
-
+            
+        if termAux[0] == '"' and termAux[-1] == '"':
+            var = termAux.replace('"',"")
+            res = self.get_positionals(var.split("|"))
         #Comprobamos si se debe realizar stemming
         elif (self.use_stemming):
             res = self.get_stemming(term, field)
@@ -556,6 +564,38 @@ class SAR_Project:
         return: posting list
 
         """
+        pos = -1
+        docs = []
+        res = []
+        for i in terms:
+            if i in self.posindex.keys():    
+                docs.append(list(sorted(self.posindex[i].keys())))                
+            else:
+                return [] 
+        prev = docs.pop(0)
+        while docs != []:
+            d = docs.pop(0)
+            prev = self.and_posting(prev,d)
+        for d in prev:
+            posis = [self.posindex[w][d] for w in terms]
+            
+            for i in posis[0]:
+                start = 1
+                n = i
+                while start <= len(posis):
+                    if start == len(posis): 
+                        if d not in res:
+                            res.append(d)
+                            break
+                    elif n+1 in posis[start]:
+                        start += 1
+                        n+=1
+                    else:
+                        break
+        return res            
+            
+            
+            
         
 
 
