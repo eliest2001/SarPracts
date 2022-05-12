@@ -291,19 +291,17 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
      # Recorremos todos los campos del índice de términos
-        for field in self.index:
-
-            # Recorremos todos los términos del campo
-            for term in self.index[field]:
-                    aux = term + "$"
-                    i=0
-
-                    # Generamos los términos permuterm y actualizamos sus posting lists
-                    for w in aux:
-                        pterm = aux[i:] + aux[0:i]
-                        i=i+1
-                        self.ptindex[field][pterm] = self.or_posting(self.ptindex[field].get(pterm, []),self.index[field][term])
-                        self.pterms[pterm] = self.pterms.get(pterm, []) + [term]
+        for term in self.index.keys():
+            aux = term + "$"
+            i=0
+            if term not in self.ptindex.keys():
+                self.ptindex[term] = [term]
+             # Generamos los términos permuterm y actualizamos sus posting lists
+                for w in aux:
+                    pterm = aux[i:] + aux[0:i]
+                    i=i+1
+                    self.ptindex[term].append(pterm)
+            self.ptindex[term].remove(term)
 
 
 
