@@ -169,6 +169,8 @@ class SAR_Project:
         if self.stemming:
             self.set_stemming(True)
             self.make_stemming()
+        if self.permuterm:
+            self.make_permuterm()
             
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
@@ -298,10 +300,10 @@ class SAR_Project:
                 self.ptindex[term] = [term]
              # Generamos los términos permuterm y actualizamos sus posting lists
                 for w in aux:
-                    pterm = aux[i:] + aux[0:i]
+                    pterm = aux[i:] + aux[0:i] 
                     i=i+1
                     self.ptindex[term].append(pterm)
-            self.ptindex[term].remove(term)
+            
 
 
 
@@ -518,7 +520,7 @@ class SAR_Project:
         termAux = term
 
         #Se añade el término y campo de la consulta para el ranking
-        self.term_field[(termAux, field)] = True
+        #self.term_field[(termAux, field)] = True
 
         res = []
 
@@ -603,32 +605,25 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ##################################################
         res = []
-
-        #Comprobamos que se incluye la palabra comodín y cuál es
-        if("*" in term or "?" in term):
-            pterm = term + "$"
-            if "*" in pterm:
-                s = "*"
-            else:
-                s = "?"
-
-            #Realizamos permutaciones hasta que el carácter comodín se encuentra en la última posición
-            while pterm[len(pterm)-1]!=s:
-                pterm = pterm[1:] + pterm[0]
-
-            #Llegados a este punto ya tenemos la palabra que debemos buscar en ptindex
-            #Si s=="*"
-            if(s == "*"):
-                for element in self.ptindex[field].keys():
-                    if(element[0:len(pterm)-1] == pterm[0:len(pterm)-1]):
-                        res = self.or_posting(res,self.ptindex[field][element])
-
-            #Si s=="?"
-            else:
-                for element in self.ptindex[field].keys():
-                    if(element[0:len(pterm)-1] == pterm[0:len(pterm)-1] and len(element) <= (len(pterm)-1)):
-                        res = self.or_posting(res,self.ptindex[field][element])
-
+        i=0
+        
+        print("GET PERMUTERM!")
+        if("?" in term):
+            term = term.replace("?", "*")
+        
+        for simbolo in term:
+            if(simbolo=="*"):
+                break
+            i=i+1
+           
+           
+            
+        ini=term[0:i]
+        fin=term[i+1:len(term)]
+        for permuterms in self.ptindex:
+            if permuterms.startswith(ini) and permuterms.endswith(fin):
+                res.append(permuterms)
+       
         return res
 
 
