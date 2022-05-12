@@ -143,7 +143,7 @@ class SAR_Project:
         self.positional = args['positional']
         self.stemming = args['stem']
         self.permuterm = args['permuterm']
-        
+
         if self.multifield:
             self.index = {
                 'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
@@ -171,7 +171,7 @@ class SAR_Project:
             self.make_stemming()
         if self.permuterm:
             self.make_permuterm()
-            
+
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
@@ -198,7 +198,7 @@ class SAR_Project:
             i = 0 #Contador para los articulos dentro del fichero
             fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
             jlist = json.load(fh)
-            if self.positional:                
+            if self.positional:
                 for new in jlist:
                     n = len(self.docs) #DocId
                     self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
@@ -233,8 +233,8 @@ class SAR_Project:
                             self.index[w] = [n]
                             self.posindex[w] = {n : [j]}
                         j = j + 1
-                    i = i + 1                
-        
+                    i = i + 1
+
 
 
 
@@ -264,13 +264,13 @@ class SAR_Project:
 
         """
          # Recorremos todos los campos del índice de términos
-        
+
         for word in self.index.keys():
-          
+
             # Recorremos todos los términos del campo
                 # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
             stem = self.stemmer.stem(word)
-            
+
             if stem in self.sindex.keys():
                 if word not in self.sindex[stem]:
                     self.sindex[stem].append(word)
@@ -336,7 +336,7 @@ class SAR_Project:
             print('----------------------------------------')
         if (self.positional):
             print('POSITIONAL:')
-            
+
         print('========================================')
 
         ########################################
@@ -410,7 +410,7 @@ class SAR_Project:
 
         new_query = ""      #query a procesar
         i=1                 #indica a partir de donde comienza new_query
-        field = 'articulo'  #campo sobre el que se efectua la query
+        field = 'article'   #campo sobre el que se efectua la query
 
         if query is None or len(query) == 0:
             return prev
@@ -532,7 +532,7 @@ class SAR_Project:
         #Comprobamos si se debe realizar permuterms
         if ("*" in termAux or "?" in termAux):
             res = self.get_permuterm(termAux,field)
-            
+
         if termAux[0] == '"' and termAux[-1] == '"':
             var = termAux.replace('"',"")
             res = self.get_positionals(var.split("|"))
@@ -568,22 +568,22 @@ class SAR_Project:
         docs = []
         res = []
         for i in terms:
-            if i in self.posindex.keys():    
-                docs.append(list(sorted(self.posindex[i].keys())))                
+            if i in self.posindex.keys():
+                docs.append(list(sorted(self.posindex[i].keys())))
             else:
-                return [] 
+                return []
         prev = docs.pop(0)
         while docs != []:
             d = docs.pop(0)
             prev = self.and_posting(prev,d)
         for d in prev:
             posis = [self.posindex[w][d] for w in terms]
-            
+
             for i in posis[0]:
                 start = 1
                 n = i
                 while start <= len(posis):
-                    if start == len(posis): 
+                    if start == len(posis):
                         if d not in res:
                             res.append(d)
                             break
@@ -592,11 +592,11 @@ class SAR_Project:
                         n+=1
                     else:
                         break
-        return res            
-            
-            
-            
-        
+        return res
+
+
+
+
 
 
 
@@ -613,7 +613,7 @@ class SAR_Project:
 
         """
         # Generamos el stem del término
-        stem = self.stemmer.stem(term)      
+        stem = self.stemmer.stem(term)
         res = []
 
         # Búscamos si el stem está indexado
@@ -623,7 +623,7 @@ class SAR_Project:
             for w in words:
                 if w in self.index:
                     res = self.or_posting(res,self.index[w])
-            
+
 
         return res
 
@@ -681,7 +681,7 @@ class SAR_Project:
 
         return self.minus_posting(res, p)
 
-   
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -802,7 +802,7 @@ class SAR_Project:
                 j = j + 1
         while(i<len(p1)):
             respuesta.append(p1[i])
-            i+=1    
+            i+=1
 
         return respuesta
 
@@ -856,7 +856,7 @@ class SAR_Project:
         print(result)
         if self.use_ranking:
             result = self.rank_result(result, query)
-            
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
