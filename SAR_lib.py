@@ -530,8 +530,7 @@ class SAR_Project:
         #Comprobamos si se debe realizar permuterms
         if ("*" in termAux or "?" in termAux):
             res = self.get_permuterm(termAux,field)
-        print(termAux[0])
-        print(termAux[-1])
+            
         if termAux[0] == '"' and termAux[-1] == '"':
             var = termAux.replace('"',"")
             res = self.get_positionals(var.split("|"))
@@ -567,8 +566,8 @@ class SAR_Project:
         docs = []
         res = []
         for i in terms:
-            if i in self.posindex.keys():
-                docs.append(sorted(self.posindex[i].keys()))                
+            if i in self.posindex.keys():    
+                docs.append(list(sorted(self.posindex[i].keys())))                
             else:
                 return [] 
         prev = docs.pop(0)
@@ -582,12 +581,12 @@ class SAR_Project:
                 start = 1
                 n = i
                 while start <= len(posis):
-                    if start <= len(posis): 
+                    if start == len(posis): 
                         if d not in res:
                             res.append(d)
                             break
                     elif n+1 in posis[start]:
-                        start =+ 1
+                        start += 1
                         n+=1
                     else:
                         break
