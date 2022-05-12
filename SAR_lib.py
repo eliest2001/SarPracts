@@ -40,6 +40,7 @@ class SAR_Project:
         self.index = {} # hash para el indice invertido de terminos --> clave: termino, valor: posting list.
                         # Si se hace la implementacion multifield, se pude hacer un segundo nivel de hashing de tal forma que:
                         # self.index['title'] seria el indice invertido del campo 'title'.
+        self.posindex = {}
         self.sindex = {} # hash para el indice invertido de stems --> clave: stem, valor: lista con los terminos que tienen ese stem
         self.ptindex = {} # hash para el indice permuterm.
         self.docs = {} # diccionario de documentos --> clave: entero(docid),  valor: ruta del fichero.
@@ -142,7 +143,7 @@ class SAR_Project:
         self.positional = args['positional']
         self.stemming = args['stem']
         self.permuterm = args['permuterm']
-
+        
         if self.multifield:
             self.index = {
                 'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
@@ -166,7 +167,9 @@ class SAR_Project:
                     self.index_file(fullname)
 
         if self.stemming:
+            self.set_stemming(True)
             self.make_stemming()
+            
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
@@ -193,18 +196,43 @@ class SAR_Project:
             i = 0 #Contador para los articulos dentro del fichero
             fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
             jlist = json.load(fh)
-            for new in jlist:
-                n = len(self.docs) #DocId
-                self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
-                words = self.tokenize(new["article"])
-                for w in words:
-                    if w in self.index.keys():
-                        if n not in self.index[w]:
-                            self.index[w].append(n)
-                    else:
-                        self.index[w] = [n]
-                i = i + 1
-
+            if self.positional:                
+                for new in jlist:
+                    n = len(self.docs) #DocId
+                    self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
+                    words = self.tokenize(new["article"])
+                    j = 0
+                    for w in words:
+                        if w in self.index.keys():
+                            if n not in self.index[w]:
+                                self.index[w].append(n)
+                        if w in self.posindex.keys():
+                            if n not in self.index[w].keys():
+                                self.posindex[w][n] = [j]
+                            else:
+                                self.posindex[w][n].append(j)
+                        else:
+                            self.index[w] = [n]
+                            self.posindex[w] = {n : [j]}
+                        j = j + 1
+                    i = i + 1
+            else:
+                for new in jlist:
+                    n = len(self.docs) #DocId
+                    self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
+                    words = self.tokenize(new["article"])
+                    j = 0
+                    for w in words:
+                        if w in self.index.keys():
+                            if n not in self.index[w]:
+                                self.index[w].append(n)
+                                self.posindex[w]
+                        else:
+                            self.index[w] = [n]
+                            self.posindex[w] = {n : [j]}
+                        j = j + 1
+                    i = i + 1                
+        
 
 
 
@@ -233,18 +261,14 @@ class SAR_Project:
         self.stemmer.stem(token) devuelve el stem del token
 
         """
-        ####################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
-        ####################################################
          # Recorremos todos los campos del índice de términos
-
+        
         for word in self.index.keys():
-
+          
             # Recorremos todos los términos del campo
-            #for term in self.index[field]:
                 # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
             stem = self.stemmer.stem(word)
-
+            
             if stem in self.sindex.keys():
                 if word not in self.sindex[stem]:
                     self.sindex[stem].append(word)
@@ -308,9 +332,11 @@ class SAR_Project:
         if (self.stemming):
             print('STEMS:')
             for field in self.sindex.keys():
-                 print("\t# tokens en '{}': {}".format(field, len(self.sindex[field])))
+                 print("\t# tokens en '{}': {}".format(field, self.sindex[field]))
             print('----------------------------------------')
-        print('las consultas posicionales NO están permitidas')
+        if (self.positional):
+            print('POSITIONAL:')
+            
         print('========================================')
 
         ########################################
@@ -379,7 +405,7 @@ class SAR_Project:
 
         new_query = ""      #query a procesar
         i=1                 #indica a partir de donde comienza new_query
-        field = 'article'  #campo sobre el que se efectua la query
+        field = 'articulo'  #campo sobre el que se efectua la query
 
         if query is None or len(query) == 0:
             return prev
@@ -508,10 +534,10 @@ class SAR_Project:
 
         #Caso estándar
         elif (termAux in self.index):
-            res = self.index[termAux]
+            for t in self.index[termAux]:
+                res = self.index[termAux]
         return res
 
-        #return self.index[term]
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -530,10 +556,8 @@ class SAR_Project:
         return: posting list
 
         """
-        pass
-        ########################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE POSICIONALES ##
-        ########################################################
+        
+
 
 
     def get_stemming(self, term, field='article'):
@@ -548,21 +572,18 @@ class SAR_Project:
         return: posting list
 
         """
-
-        stem = self.stemmer.stem(term)
-
-        ####################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
-        ####################################################
         # Generamos el stem del término
-
+        stem = self.stemmer.stem(term)      
         res = []
 
         # Búscamos si el stem está indexado
-        if (stem in self.sindex[field]):
-
+        if (stem in self.sindex):
             # Devolvemos la posting list asociada al stem
-            res = self.sindex[field][stem]
+            words = self.sindex[stem]
+            for w in words:
+                if w in self.index:
+                    res = self.or_posting(res,self.index[w])
+            
 
         return res
 
@@ -635,7 +656,7 @@ class SAR_Project:
 
         return self.minus_posting(res, p)
 
-
+   
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -756,11 +777,10 @@ class SAR_Project:
                 j = j + 1
         while(i<len(p1)):
             respuesta.append(p1[i])
-            i+=1
+            i+=1    
 
         return respuesta
 
-        pass
         ########################################################
         ## COMPLETAR PARA TODAS LAS VERSIONES SI ES NECESARIO ##
         ########################################################
@@ -811,7 +831,7 @@ class SAR_Project:
         print(result)
         if self.use_ranking:
             result = self.rank_result(result, query)
-
+            
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
