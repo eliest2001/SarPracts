@@ -641,12 +641,12 @@ class SAR_Project:
 
         """
         i=0
-        res={}
+        res=[]
         if("?" in term):
-            term = term.replace("?", "")
+            term = term.replace("?", "*")
 
         for simbolo in term:
-            if(simbolo==""):
+            if(simbolo=="*"):
                 break
             i=i+1
 
