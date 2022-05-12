@@ -325,7 +325,7 @@ class SAR_Project:
         if (self.permuterm):
             print('PERMUTERMS:')
             for field in self.ptindex.keys():
-                 print("\t# tokens en '{}': {}".format(field, len(self.ptindex[field])))
+                 print("\t# tokens en '{}': {}".format(field, self.ptindex[field]))
             print('----------------------------------------')
         if (self.stemming):
             print('STEMS:')
