@@ -322,11 +322,11 @@ class SAR_Project:
         for field in self.index.keys():
             print("\t# tokens en '{}': {}".format(field, len(self.index[field])))
         print('----------------------------------------')
-        #if (self.permuterm):
-        #    print('PERMUTERMS:')
-        #    for field in self.ptindex.keys():
-        #         print("\t# tokens en '{}': {}".format(field, self.ptindex[field]))
-        #    print('----------------------------------------')
+        if (self.permuterm):
+            print('PERMUTERMS:')
+            for field in self.ptindex.keys():
+                 print("\t# tokens en '{}': {}".format(field, self.ptindex[field]))
+            print('----------------------------------------')
         if (self.stemming):
             print('STEMS:')
             for field in self.sindex.keys():
@@ -859,15 +859,15 @@ class SAR_Project:
             field=tupla[1]
 
             #si es permuterm
-            #if("*" in term or "?" in term):
+            if("*" in term or "?" in term):
                 #permuterms relacionados
-            #    pterms=self.get_pterms(term,field)
+                pterms=self.get_pterms(term,field)
 
                 #términos
-            #    for elem in pterms:
-            #        terminos=self.pterms[elem]
-            #        for termino in terminos:
-            #            terms[(termino,field)]=True
+                for elem in pterms:
+                   terminos=self.pterms[elem]
+                   for termino in terminos:
+                       terms[(termino,field)]=True
 
             #con stemming
             if self.use_stemming:
