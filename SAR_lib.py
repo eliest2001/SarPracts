@@ -907,7 +907,7 @@ class SAR_Project:
             else:
                 terms[(term,field)]=True
 
-        pesado=0
+        pesado=[]
 
         #para cada documento
         for doc in result:
@@ -933,7 +933,7 @@ class SAR_Project:
                 peso_doc = peso_doc + tf*idf
 
             #añadimos los pesados
-            self.weight_doc[doc]=self.weight_doc[doc].get(doc,0)+peso_doc
+            self.weight_doc[doc]=self.weight_doc.get(doc,0)+peso_doc
             pesado.append(peso_doc)
 
         #ordenamos los pesados
