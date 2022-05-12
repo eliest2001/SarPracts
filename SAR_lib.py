@@ -169,6 +169,8 @@ class SAR_Project:
         if self.stemming:
             self.set_stemming(True)
             self.make_stemming()
+        if self.permuterm:
+            self.make_permuterm()
             
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
@@ -638,7 +640,8 @@ class SAR_Project:
         return: posting list
 
         """
-
+        i=0
+        res={}
         if("?" in term):
             term = term.replace("?", "")
 
@@ -646,8 +649,6 @@ class SAR_Project:
             if(simbolo==""):
                 break
             i=i+1
-
-
 
         ini=term[0:i]
         fin=term[i+1:len(term)]
