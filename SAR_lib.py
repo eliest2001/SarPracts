@@ -548,7 +548,7 @@ class SAR_Project:
         """
         NECESARIO PARA LA AMPLIACION DE POSICIONALES
 
-        Devuelve la posting list asociada a una secuencia de terminos consecutivos.
+        Devuelve  la posting list asociada a una secuencia de terminos consecutivos.
 
         param:  "terms": lista con los terminos consecutivos para recuperar la posting list.
                 "field": campo sobre el que se debe recuperar la posting list, solo necesario se se hace la ampliacion de multiples indices
