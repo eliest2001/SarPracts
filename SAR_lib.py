@@ -143,7 +143,7 @@ class SAR_Project:
         self.positional = args['positional']
         self.stemming = args['stem']
         self.permuterm = args['permuterm']
-        
+
         if self.multifield:
             self.index = {
                 'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
@@ -169,7 +169,7 @@ class SAR_Project:
         if self.stemming:
             self.set_stemming(True)
             self.make_stemming()
-            
+
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
@@ -196,7 +196,7 @@ class SAR_Project:
             i = 0 #Contador para los articulos dentro del fichero
             fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
             jlist = json.load(fh)
-            if self.positional:                
+            if self.positional:
                 for new in jlist:
                     n = len(self.docs) #DocId
                     self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
@@ -231,8 +231,8 @@ class SAR_Project:
                             self.index[w] = [n]
                             self.posindex[w] = {n : [j]}
                         j = j + 1
-                    i = i + 1                
-        
+                    i = i + 1
+
 
 
 
@@ -262,13 +262,13 @@ class SAR_Project:
 
         """
          # Recorremos todos los campos del índice de términos
-        
+
         for word in self.index.keys():
-          
+
             # Recorremos todos los términos del campo
                 # Generamos el stem solo si no hemos hecho el stemming del término con anterioridad
             stem = self.stemmer.stem(word)
-            
+
             if stem in self.sindex.keys():
                 if word not in self.sindex[stem]:
                     self.sindex[stem].append(word)
@@ -322,11 +322,11 @@ class SAR_Project:
         for field in self.index.keys():
             print("\t# tokens en '{}': {}".format(field, len(self.index[field])))
         print('----------------------------------------')
-        if (self.permuterm):
-            print('PERMUTERMS:')
-            for field in self.ptindex.keys():
-                 print("\t# tokens en '{}': {}".format(field, self.ptindex[field]))
-            print('----------------------------------------')
+        #if (self.permuterm):
+        #    print('PERMUTERMS:')
+        #    for field in self.ptindex.keys():
+        #         print("\t# tokens en '{}': {}".format(field, self.ptindex[field]))
+        #    print('----------------------------------------')
         if (self.stemming):
             print('STEMS:')
             for field in self.sindex.keys():
@@ -334,7 +334,7 @@ class SAR_Project:
             print('----------------------------------------')
         if (self.positional):
             print('POSITIONAL:')
-            
+
         print('========================================')
 
         ########################################
@@ -554,7 +554,7 @@ class SAR_Project:
         return: posting list
 
         """
-        
+
 
 
 
@@ -571,7 +571,7 @@ class SAR_Project:
 
         """
         # Generamos el stem del término
-        stem = self.stemmer.stem(term)      
+        stem = self.stemmer.stem(term)
         res = []
 
         # Búscamos si el stem está indexado
@@ -581,7 +581,7 @@ class SAR_Project:
             for w in words:
                 if w in self.index:
                     res = self.or_posting(res,self.index[w])
-            
+
 
         return res
 
@@ -654,7 +654,7 @@ class SAR_Project:
 
         return self.minus_posting(res, p)
 
-   
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -775,7 +775,7 @@ class SAR_Project:
                 j = j + 1
         while(i<len(p1)):
             respuesta.append(p1[i])
-            i+=1    
+            i+=1
 
         return respuesta
 
@@ -829,7 +829,7 @@ class SAR_Project:
         print(result)
         if self.use_ranking:
             result = self.rank_result(result, query)
-            
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -850,8 +850,69 @@ class SAR_Project:
         return: la lista de resultados ordenada
 
         """
+        #lista de términos
+        terms={}
 
-        pass
+        for tupla in query.keys():
+            #término y campo
+            term=tupla[0]
+            field=tupla[1]
+
+            #si es permuterm
+            #if("*" in term or "?" in term):
+                #permuterms relacionados
+            #    pterms=self.get_pterms(term,field)
+
+                #términos
+            #    for elem in pterms:
+            #        terminos=self.pterms[elem]
+            #        for termino in terminos:
+            #            terms[(termino,field)]=True
+
+            #con stemming
+            if self.use_stemming:
+                #términos asociados al stem
+                terminos=self.sterms[self.stemmer.stem(term)]
+                for termino in terminos:
+                    terms[(termino,field)]=True
+
+            #en el resto de los casos
+            else:
+                terms[(term,field)]=True
+
+        pesado=0
+
+        #para cada documento
+        for doc in result:
+            peso_doc=0
+
+            #para cada término y campo
+            for tupla in terms:
+                term=tupla[0]
+                field=tupla[1]
+
+                #se calcula el pesado
+                tf=0
+                ft=self.weight[field][term].get(doc,0)
+
+                if ft>0:
+                    tf=1+math.log10(ft)
+
+                #calculamos la funcion global idf
+                df=len(self.weigth[field][term])
+                idf=math-log10(self.N/df)
+
+                #calculamos el peso del documento
+                peso_doc = peso_doc + tf*idf
+
+            #añadimos los pesados
+            self.weight_doc[doc]=self.weight_doc[doc].get(doc,0)+peso_doc
+            pesado.append(peso_doc)
+
+        #ordenamos los pesados
+        res=[x for _, x in sorted(zip(pesado,result), reverse=True)]
+
+        return res
 
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
