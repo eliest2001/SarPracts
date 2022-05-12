@@ -45,6 +45,7 @@ class SAR_Project:
         self.ptindex = {} # hash para el indice permuterm.
         self.docs = {} # diccionario de documentos --> clave: entero(docid),  valor: ruta del fichero.
         self.weight = {} # hash de terminos para el pesado, ranking de resultados. puede no utilizarse
+        self.weight_doc = {} #hash de documentos para el pesado
         self.news = {} # hash de noticias --> clave entero (newid), valor: la info necesaria para diferenciar la noticia dentro de su fichero (doc_id y posición dentro del documento)
         self.tokenizer = re.compile("\W+") # expresion regular para hacer la tokenizacion
         self.stemmer = SnowballStemmer('spanish') # stemmer en castellano
