@@ -37,6 +37,7 @@ class SAR_Project:
 
         """
         self.term_field = {}
+        self.weight_doc = {}
         self.index = {} # hash para el indice invertido de terminos --> clave: termino, valor: posting list.
                         # Si se hace la implementacion multifield, se pude hacer un segundo nivel de hashing de tal forma que:
                         # self.index['title'] seria el indice invertido del campo 'title'.
@@ -45,7 +46,6 @@ class SAR_Project:
         self.ptindex = {} # hash para el indice permuterm.
         self.docs = {} # diccionario de documentos --> clave: entero(docid),  valor: ruta del fichero.
         self.weight = {} # hash de terminos para el pesado, ranking de resultados. puede no utilizarse
-        self.weight_doc = {} #hash de documentos para el pesado
         self.news = {} # hash de noticias --> clave entero (newid), valor: la info necesaria para diferenciar la noticia dentro de su fichero (doc_id y posición dentro del documento)
         self.tokenizer = re.compile("\W+") # expresion regular para hacer la tokenizacion
         self.stemmer = SnowballStemmer('spanish') # stemmer en castellano
@@ -177,7 +177,7 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
 
-
+        
 
     def index_file(self, filename):
         """
@@ -199,10 +199,13 @@ class SAR_Project:
             i = 0 #Contador para los articulos dentro del fichero
             fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
             jlist = json.load(fh)
+            d = len(self.docs) #DocId
+            self.docs[d] = filename
             if self.positional:
                 for new in jlist:
-                    n = len(self.docs) #DocId
-                    self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
+                    n = len(self.news) #NewId
+
+                    self.news[n] = f"{d}_{i}" #Asignar al newId su nombre junto con la posición relativa
                     words = self.tokenize(new["article"])
                     j = 0
                     for w in words:
@@ -221,8 +224,9 @@ class SAR_Project:
                     i = i + 1
             else:
                 for new in jlist:
-                    n = len(self.docs) #DocId
-                    self.docs[n] = f"{fname}_{i}" #Asignar al DocId su nombre junto con la posición relativa
+                    
+                    n = len(self.news) #NewId
+                    self.news[n] = f"{d}_{i}" #Asignar al newId su nombre junto con la posición relativa
                     words = self.tokenize(new["article"])
                     j = 0
                     for w in words:
@@ -235,6 +239,7 @@ class SAR_Project:
                             self.posindex[w] = {n : [j]}
                         j = j + 1
                     i = i + 1
+            fh.close()
 
 
 
@@ -317,27 +322,24 @@ class SAR_Project:
         """
 
         print('========================================')
-        print('Number of indexed days: {}'.format(len(self.docs)))
+        print('Número de días indexados: {}'.format(len(self.docs)))
         print('----------------------------------------')
-        print('Number of indexed news: {}'.format(len(self.news)))
+        print('Número de noticias indexadas: {}'.format(len(self.news)))
         print('----------------------------------------')
         print('TOKENS:')
-        for field in self.index.keys():
-            print("\t# of tokens in '{}': {}".format(field, len(self.index[field])))
+        print("\t# tokens en 'index': {}".format(len(self.index.keys())))
         print('----------------------------------------')
         if (self.permuterm):
             print('PERMUTERMS:')
-            for field in self.ptindex.keys():
-                 print("\t# of permuterms in '{}': {}".format(field, self.ptindex[field]))
+            print(f"\t# tokens en 'ptindex': {len(self.ptindex.keys())}")
             print('----------------------------------------')
         if (self.stemming):
             print('STEMS:')
-            for field in self.sindex.keys():
-                 print("\t# of stems in '{}': {}".format(field, self.sindex[field]))
+            print(f"\t# tokens en 'sindex': {len(self.sindex.keys())}")
             print('----------------------------------------')
         if (self.positional):
-            print('Positional queries are allowed.')
-
+            print('POSITIONALS:')
+            print(f"\t# tokens en 'posindex': {len(self.posindex.keys())}")
         print('========================================')
 
         ########################################
@@ -379,7 +381,7 @@ class SAR_Project:
             if item == '(' or item == ')':
                 split = split + " " + item + " "
             if item == '"':
-                open = True
+                open = not open
             if item == " " and open:
                 split = split + "|"
             else:
@@ -588,6 +590,8 @@ class SAR_Project:
                         if d not in res:
                             res.append(d)
                             break
+                        else: 
+                            break
                     elif n+1 in posis[start]:
                         start += 1
                         n+=1
@@ -655,7 +659,9 @@ class SAR_Project:
         fin=term[i+1:len(term)]
         for permuterms in self.ptindex:
             if permuterms.startswith(ini) and permuterms.endswith(fin):
-                res.append(permuterms)
+                l = self.get_posting(permuterms)
+                for i in l:
+                    res.append(i)
 
         return res
 
@@ -676,7 +682,7 @@ class SAR_Project:
         """
 
         #Obtenemos una posting list con todas las noticias diferentes
-        res = list(self.docs.keys())
+        res = list(self.news.keys())
 
         #Procedemos a quitar aquellas que están incluidas en p
 
@@ -853,94 +859,109 @@ class SAR_Project:
         return: el numero de noticias recuperadas, para la opcion -T
 
         """
+        
         result = self.solve_query(query)
-        print(result)
-        if self.use_ranking:
-            result = self.rank_result(result, query)
+        
+            
+        print(f"Noticias recuperadas: {len(result)}")
+        for n in result:
+            d = self.news[n]
+            lis = d.split("_")
+            ruta = self.docs[int(lis[0])]
+            with open(ruta) as f:
+                docJson = json.load(f)
+                fecha = docJson[int(lis[1])]["date"]
+                titulo = docJson[int(lis[1])]["title"]
+                keywords = docJson[int(lis[1])]["keywords"]
+                score = 0             
+                print(f"Noticia: {n}")
+                print(f"    Fecha: {fecha}")
+                print(f"    Título: {titulo}")
+                print(f"    Keywords: {keywords}")
+                print(f"    Score: {score}")
+                if self.show_snippet:
+                    texto = docJson[int(lis[1])]["article"]
+                    arrwords = self.tokenize(texto) 
+                    consulta = query.lower()
+                    #separamos los parentesis
+                    split = ""
+                    for i in range(0,len(consulta)):
+                        item=consulta[i]
+                        if item == '(' or item == ')' or item == '"':
+                            split = split + " " + item + " "
+                        else:
+                            split = split + item
 
-        ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
-        ########################################
+                    #separamos los diferentes items de la query
+                    consulta = split.split(" ")  
+                    palabras = []
+                    for i in range(len(consulta)):
+                        if consulta[i] == "not":
+                            i = i + 1
+                        else:
+                            if consulta[i]!= "or" and consulta[i] != "and":
+                                palabras.append(consulta[i])
+                    snippet =""
+                    encontradas = 0
+                    abuscar = []
+                    if self.use_stemming:
+                        for p in palabras:
+                            terminos=self.sindex[self.stemmer.stem(p)]
+                            for t in terminos:
+                                abuscar.append(t)
+                    else:
+                        for p in palabras:
+                            if("*" in p or "?" in p):
+                                i=0
+                                res=[]
+                                p = p.replace("?", "*")
 
-
-
+                                for simbolo in p:
+                                    if(simbolo=="*"):
+                                        break
+                                    i=i+1
+                                ini=p[0:i]
+                                fin=p[i+1:len(p)]
+                                for permuterms in self.ptindex:
+                                    if permuterms.startswith(ini) and permuterms.endswith(fin):
+                                        abuscar.append(permuterms)
+                            else:
+                                abuscar.append(p)
+                                 
+                    if len(abuscar) > 1:
+                        for w in arrwords:
+                            if w in abuscar:
+                                encontradas += 1
+                                snippet =  snippet + " " + w
+                                if len(snippet.split(" ")) > 10: break
+                            else:
+                                if encontradas > 0 and encontradas != len(abuscar):
+                                    snippet = snippet + " " + w
+                                    
+                    if len(abuscar) == 1 or len(snippet.split(" ")) < 10 or len(snippet.split(" ")) > 250:
+                        
+                        puntos = texto.lower().split(".")
+                        for f in puntos:
+                            for i in abuscar:
+                                if i in f:
+                                    snippet = f
+                    
+                    print(f"    Snippet: {snippet}")
+                    print("---------------------------------------------------------------------------------")
+                    
+                            
+                            
 
     def rank_result(self, result, query):
         """
         NECESARIO PARA LA AMPLIACION DE RANKING
-
         Ordena los resultados de una query.
-
         param:  "result": lista de resultados sin ordenar
                 "query": query, puede ser la query original, la query procesada o una lista de terminos
-
-
         return: la lista de resultados ordenada
-
         """
 
-        terms={}
-
-        for tupla in query.keys():
-            #término y campo
-            term=tupla[0]
-            field=tupla[1]
-
-            #si es permuterm
-            if("*" in term or "?" in term):
-                #permuterms relacionados
-                pterms=self.get_pterms(term,field)
-
-                #términos
-                for elem in pterms:
-                   terminos=self.pterms[elem]
-                   for termino in terminos:
-                       terms[(termino,field)]=True
-
-            #con stemming
-            if self.use_stemming:
-                #términos asociados al stem
-                terminos=self.sterms[self.stemmer.stem(term)]
-                for termino in terminos:
-                    terms[(termino,field)]=True
-
-            #en el resto de los casos
-            else:
-                terms[(term,field)]=True
-
-        pesado=[]
-
-        #para cada documento
-        for doc in result:
-            peso_doc=0
-
-            #para cada término y campo
-            for tupla in terms:
-                term=tupla[0]
-                field=tupla[1]
-
-                #se calcula el pesado
-                tf=0
-                ft=self.weight[field][term].get(doc,0)
-
-                if ft>0:
-                    tf=1+math.log10(ft)
-
-                #calculamos la funcion global idf
-                df=len(self.weigth[field][term])
-                idf=math.log10(self.N/df)
-
-                #calculamos el peso del documento
-                peso_doc = peso_doc + tf*idf
-
-            #añadimos los pesados
-            self.weight_doc[doc]=self.weight_doc.get(doc,0)+peso_doc
-            pesado.append(peso_doc)
-
-        #ordenamos los pesados
-        res=[x for _, x in sorted(zip(pesado,result), reverse=True)]
-
-        return res
+        pass
 
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
