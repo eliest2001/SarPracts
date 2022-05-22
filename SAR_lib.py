@@ -325,7 +325,7 @@ class SAR_Project:
             print('----------------------------------------')
         if (self.positional):
             print('POSITIONALS:')
-            print(f"\t# tokens en 'posindex': {len(self.posindex.keys())}")
+            print(f"Se permiten consultas posicionales")
         print('========================================')
 
         ########################################
