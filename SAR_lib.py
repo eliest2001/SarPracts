@@ -181,6 +181,7 @@ class SAR_Project:
         """
 
         with open(filename) as fh:
+            
             i = 0 #Contador para los articulos dentro del fichero
             #fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
      
