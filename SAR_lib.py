@@ -380,12 +380,12 @@ class SAR_Project:
             item=query[i]
             if item == '(' or item == ')':
                 split = split + " " + item + " "
-            if item == '"':
-                open = not open
-            if item == " " and open:
-                split = split + "|"
             else:
-                split = split + item
+                if item == '"':
+                    open = not open
+                if item == " " and open:
+                    split = split + "|"
+                else: split = split + item
 
         #separamos los diferentes items de la query
         query = split.split()
