@@ -145,21 +145,6 @@ class SAR_Project:
         self.stemming = args['stem']
         self.permuterm = args['permuterm']
 
-        if self.multifield:
-            self.index = {
-                'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
-            }
-            self.weight = {
-                'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
-            }
-            if self.stemming:
-                self.sindex = {
-                    'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
-                }
-            if self.permuterm:
-                self.ptindex = {
-                    'title': {}, 'date': {}, 'keywords': {}, 'article': {}, 'summary': {}
-                }
 
         for dir, subdirs, files in os.walk(root):
             for filename in files:
@@ -197,15 +182,18 @@ class SAR_Project:
 
         with open(filename) as fh:
             i = 0 #Contador para los articulos dentro del fichero
-            fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
+            #fname = filename.split("\\")[2][:-5] #Split para sacar el nombre base
+     
             jlist = json.load(fh)
             d = len(self.docs) #DocId
             self.docs[d] = filename
+
             if self.positional:
                 for new in jlist:
                     n = len(self.news) #NewId
 
                     self.news[n] = f"{d}_{i}" #Asignar al newId su nombre junto con la posición relativa
+      
                     words = self.tokenize(new["article"])
                     j = 0
                     for w in words:
@@ -868,8 +856,8 @@ class SAR_Project:
             d = self.news[n]
             lis = d.split("_")
             ruta = self.docs[int(lis[0])]
-            with open(ruta) as f:
-                docJson = json.load(f)
+            with open(ruta) as fi:
+                docJson = json.load(fi)
                 fecha = docJson[int(lis[1])]["date"]
                 titulo = docJson[int(lis[1])]["title"]
                 keywords = docJson[int(lis[1])]["keywords"]
@@ -885,12 +873,19 @@ class SAR_Project:
                     consulta = query.lower()
                     #separamos los parentesis
                     split = ""
-                    for i in range(0,len(consulta)):
+                    op = False
+                    for i in range(0,len(query)):
                         item=consulta[i]
-                        if item == '(' or item == ')' or item == '"':
+                        if item == '(' or item == ')':
                             split = split + " " + item + " "
                         else:
-                            split = split + item
+                            if item == '"':
+                                op = not op
+                            if item == " " and open:
+                                split = split + "|"
+                            else: split = split + item
+                            
+                    
 
                     #separamos los diferentes items de la query
                     consulta = split.split(" ")  
@@ -904,11 +899,13 @@ class SAR_Project:
                     snippet =""
                     encontradas = 0
                     abuscar = []
+
                     if self.use_stemming:
                         for p in palabras:
                             terminos=self.sindex[self.stemmer.stem(p)]
                             for t in terminos:
                                 abuscar.append(t)
+                    
                     else:
                         for p in palabras:
                             if("*" in p or "?" in p):
@@ -925,6 +922,9 @@ class SAR_Project:
                                 for permuterms in self.ptindex:
                                     if permuterms.startswith(ini) and permuterms.endswith(fin):
                                         abuscar.append(permuterms)
+                            elif('"' in p):
+                                words = p.replace('"',"").replace('|'," ")
+                                abuscar.append(words)
                             else:
                                 abuscar.append(p)
                                  
