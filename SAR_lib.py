@@ -634,31 +634,53 @@ class SAR_Project:
         i=0
         res=[]
         resprov=[]
-        if("?" in term):
-            term = term.replace("?", "*")
+        if("*" in term):
+            for simbolo in term:
+                if(simbolo=="*"):
+                    break
+                i=i+1
 
-        for simbolo in term:
-            if(simbolo=="*"):
-                break
-            i=i+1
+            ini=term[0:i]
+            fin=term[i+1:len(term)]
+            for permuterms in self.ptindex.keys():
+                if(permuterms[0]=="$"):
+                    pterms=["",permuterms[1:]]
+                elif(permuterms[len(permuterms)-1]=="$"):
+                    pterms=[permuterms[:-1],""]
+                else:
+                    pterms=permuterms.split("$")
+                if(pterms[0].endswith(fin) & pterms[1].startswith(ini)):
+                    w=self.ptindex[permuterms]
+                    if(w not in res):
+                        resprov.append(w)
+            
+            for w in resprov:
+                lista=self.get_posting(w)
+                res=self.or_posting(res,lista)
+        else:
+            for simbolo in term:
+                if(simbolo=="?"):
+                    break
+                i=i+1
 
-        ini=term[0:i]
-        fin=term[i+1:len(term)]
-        for permuterms in self.ptindex.keys():
-            if(permuterms[0]=="$"):
-                pterms=["",permuterms[1:]]
-            elif(permuterms[len(permuterms)-1]=="$"):
-                pterms=[permuterms[:-1],""]
-            else:
-                pterms=permuterms.split("$")
-            if(pterms[0].endswith(fin) & pterms[1].startswith(ini)):
-                w=self.ptindex[permuterms]
-                if(w not in res):
-                    resprov.append(w)
-        
-        for w in resprov:
-            lista=self.get_posting(w)
-            res=self.or_posting(res,lista)
+            ini=term[0:i]
+            fin=term[i+1:len(term)]
+
+            for permuterms in self.ptindex.keys():
+                if(permuterms[0]=="$"):
+                    pterms=["",permuterms[1:]]
+                elif(permuterms[len(permuterms)-1]=="$"):
+                    pterms=[permuterms[:-1],""]
+                else:
+                    pterms=permuterms.split("$")
+                if(pterms[0].endswith(fin) & pterms[1].startswith(ini)):
+                    w=self.ptindex[permuterms]
+                    if(w not in res and len(w)==len(term)):
+                        resprov.append(w)
+            for w in resprov:
+                lista=self.get_posting(w)
+                res=self.or_posting(res,lista)
+
 
             # #if permuterms.startswith(ini) and permuterms.endswith(fin):
             #    # l = self.get_posting(permuterms)
