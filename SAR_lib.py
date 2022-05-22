@@ -291,14 +291,11 @@ class SAR_Project:
         for term in self.index.keys():
             aux = term + "$"
             i=0
-            if term not in self.ptindex.keys():
-                self.ptindex[term] = [term]
-             # Generamos los términos permuterm y actualizamos sus posting lists
+            if aux not in self.ptindex.keys():
                 for w in aux:
                     pterm = aux[i:] + aux[0:i]
+                    self.ptindex[pterm] = term
                     i=i+1
-                    self.ptindex[term].append(pterm)
-            self.ptindex[term].remove(term)
 
 
 
@@ -636,6 +633,7 @@ class SAR_Project:
         """
         i=0
         res=[]
+        resprov=[]
         if("?" in term):
             term = term.replace("?", "*")
 
@@ -646,11 +644,26 @@ class SAR_Project:
 
         ini=term[0:i]
         fin=term[i+1:len(term)]
-        for permuterms in self.ptindex:
-            if permuterms.startswith(ini) and permuterms.endswith(fin):
-                l = self.get_posting(permuterms)
-                for i in l:
-                    res.append(i)
+        for permuterms in self.ptindex.keys():
+            if(permuterms[0]=="$"):
+                pterms=["",permuterms[1:]]
+            elif(permuterms[len(permuterms)-1]=="$"):
+                pterms=[permuterms[:-1],""]
+            else:
+                pterms=permuterms.split("$")
+            if(pterms[0].endswith(fin) & pterms[1].startswith(ini)):
+                w=self.ptindex[permuterms]
+                if(w not in res):
+                    resprov.append(w)
+        
+        for w in resprov:
+            lista=self.get_posting(w)
+            res=self.or_posting(res,lista)
+
+            # #if permuterms.startswith(ini) and permuterms.endswith(fin):
+            #    # l = self.get_posting(permuterms)
+            #     for i in l:
+            #         res.append(i)
 
         return res
 
